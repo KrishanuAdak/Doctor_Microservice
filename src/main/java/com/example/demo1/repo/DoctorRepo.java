@@ -9,12 +9,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.example.demo1.model.Doctor;
+import com.example.demo1.model.DoctorDetailsToAppointment;
 
 import io.lettuce.core.dynamic.annotation.Param;
 import jakarta.transaction.Transactional;
 
 @Repository
 public interface DoctorRepo extends JpaRepository<Doctor,Integer> {
+	 
+//	/@Query(value="select doctor_name,phone_number from doctor_basic_details where doctor_id=?1")
+//	public DoctorDetailsToAppointment findByDoctorNameAndDoctorPhone(int id); 
+	
+    @Query(value="select doctor_name as doctor_Name,phone_number as phone_number from doctor_basic_details where doctor_id=?1",nativeQuery=true)
+	public DoctorDetailsToAppointment findDetailsById(int id);
+	
 	
 	@Query(value="select id from doctor_list where doctor_name=?1",nativeQuery=true)
 	public int getIdFromLoginByUsername(String doctor_name);

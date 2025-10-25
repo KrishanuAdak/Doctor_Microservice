@@ -40,14 +40,14 @@ public class Avaible_Now_service {
 		d.setEnd_time(newDateTime);	 
 		d.setLock_version(false);	 	
 		Available_Doctor_Now x=this.repo.save(d);
-		this.kafkaTemplate.send("available-doc",new Available_Doctor_Now(dd.getId(), dd.getDoctor_id(), LocalDateTime.now(), newDateTime, false));
+//		this.kafkaTemplate.send("available-doc",new Available_Doctor_Now(dd.getId(), dd.getDoctor_id(), LocalDateTime.now(), newDateTime, false));
 		System.out.println("Event pushed!"+Available_Doctor_Now.class);
 		return x;		
 	}
 	
-	public List<Available_Doctor_Respponse> availableDoctors()
+	public List<Integer> availableDoctors()
 	{
-		return this.repo.getAll(); 
+		return this.repo.getAllAvailableDoctors(); 
 	}
 	
 	

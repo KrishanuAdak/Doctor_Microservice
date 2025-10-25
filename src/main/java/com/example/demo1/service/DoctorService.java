@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 //import com.example.demo1.config.CustomUserDetails;
 import com.example.demo1.model.Doctor;
+import com.example.demo1.model.DoctorDetailsToAppointment;
 //import com.example.demo1.model.EmailSender;
 import com.example.demo1.repo.DoctorRepo;
 
@@ -81,21 +82,33 @@ public class DoctorService {
 //		
 //	}
 	
-	public Doctor registerCheck(Doctor d) {
-		Doctor dd=d;
-		Random rand=new Random();
-		int id=rand.nextInt(999999)+1;
-		dd.setId(id);
-//		dd.setPassword(encoder.encode(d.getPassword()));
-		dd.setPhone_number(d.getPhone_number());
-		dd.setRegistrationNumber(d.getRegistrationNumber());
-//		dd.setApproval_Status("PENDING");
-		dd.setCreation_date(LocalDateTime.now());
-	
-		Doctor x=this.repo.save(dd);
-		return x;
+	public Doctor saveBasicDetails(Doctor d) {
+		Doctor doctor=new Doctor();
+		if(d!=null) {
+			
+		doctor.setDoctor_id(d.getDoctor_id());
+		doctor.setCreation_date(LocalDateTime.now());
+		doctor.setDoctor_name(d.getDoctor_name());
+		doctor.setPhone_number(doctor.getPhone_number());
+		doctor.setFileName(d.getFileName());
+//		doctor.setFileType();
+		doctor.setRegistrationFile(d.getRegistrationFile());
+		doctor.setLock_version(false);
+		Doctor dd=this.repo.save(doctor);
+		return dd;
 		
+		}
+		return null;
 		
+			
+		
+	}
+	public DoctorDetailsToAppointment findNameAndPhoneById(int id) {
+		DoctorDetailsToAppointment data=this.repo.findDetailsById(id);
+		if(data!=null) {
+			return data;
+		}
+		return data;			
 	}
 	
 	
@@ -227,6 +240,7 @@ public class DoctorService {
 		  }
 		  return doctor;
 	  }
+	  
 	
 
 	

@@ -3,11 +3,15 @@ package com.example.demo1.model;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+//import jakarta.persistence.GeneratedValue
+//import jakarta.persistence.GeneratedValue
 
 @Entity
 @Table(name="available_doctors_now_01")
@@ -15,6 +19,7 @@ public class Available_Doctor_Now {
 	
 	
 	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int id; 
 //	@OneToOne
 //	@JoinColumn(name = "doctor_id", referencedColumnName = "id", nullable = false)

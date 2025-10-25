@@ -1,28 +1,13 @@
 package com.example.demo1.controller;
 
-import org.springframework.http.HttpHeaders;
+
 import org.springframework.http.MediaType;
 
-import java.nio.file.Files;
-import java.net.MalformedURLException;
-import java.nio.file.*;
-import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-
-
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -44,21 +29,18 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo1.Exception.ResourceNotFoundException;
-import com.example.demo1.Exception.UnauthorizedUser;
 import com.example.demo1.config.BlacklistToken;
-import com.example.demo1.impl.UserDetailsImpl;
 import com.example.demo1.model.Available_Doctor_Now;
-import com.example.demo1.model.Available_Doctor_Respponse;
 import com.example.demo1.model.Doctor;
-
+import com.example.demo1.model.DoctorDetailsToAppointment;
 import com.example.demo1.repo.DoctorRepo;
 import com.example.demo1.service.Avaible_Now_service;
 //import com.example.demo1.openfeign.OpenFiegn;
 import com.example.demo1.service.DoctorService;
 import com.example.demo1.service.LoginRecordsService;
-import com.example.demo1.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.validation.Valid;
-import jakarta.servlet.http.HttpServletRequest;
 
 
 
@@ -91,6 +73,8 @@ public class BasicController {
 	private DoctorRepo doctorRepo;
 	
 	
+	
+	
 
 
 	
@@ -109,27 +93,32 @@ public class BasicController {
 	
 	@PostMapping("/register")
 	public Doctor registerDoctor(@RequestBody Doctor d){
-		return this.service.registerCheck(d);
+		return this.service.saveBasicDetails(d);
 		
 	}
 	
-	@PostMapping("/register/basic-details")
+	@PostMapping(value="/register/basic-details",
+		    consumes = { MediaType.MULTIPART_FORM_DATA_VALUE }
+)
 	public ResponseEntity<?> saveBasicDetails(@RequestHeader("X-User-Id") String user_id,
-	        @RequestHeader("X-Role") String role,@Valid @RequestBody Doctor doctor, BindingResult bindingResults){
-				if(doctor!=null && user_id!=null) {
-					Doctor doc=new Doctor();
-					doc.setDoctor_name(doctor.getDoctor_name());
-					doc.setDoctor_id(Integer.parseInt(user_id));
-					doc.setRegistrationNumber(doctor.getRegistrationNumber());
-					doc.setPhone_number(doctor.getPhone_number());
-					doc.setLock_version(false);
-					doc.setCreation_date(LocalDateTime.now());					
-					Doctor d=doc;
+	        @RequestHeader("X-Role") String role,@Valid @RequestPart("details") String docx,@RequestPart("file") MultipartFile file,BindingResult bindingResults) throws IOException{
+				if(docx!=null && user_id!=null) {
+					ObjectMapper mapper=new ObjectMapper();
+					Doctor doctor=mapper.readValue(docx, Doctor.class);
+//					/Doctor doc=new Doctor();
+					doctor.setDoctor_name(doctor.getDoctor_name());
+					doctor.setDoctor_id(Integer.parseInt(user_id));
+					doctor.setRegistrationNumber(doctor.getRegistrationNumber());
+				    doctor.setPhone_number(doctor.getPhone_number());
+					doctor.setLock_version(false);
+					doctor.setRegistrationFile(file.getBytes());
+					doctor.setCreation_date(LocalDateTime.now());	
+					doctor.setFileName(file.getName());
+					Doctor d=doctor;
 					Doctor x=this.doctorRepo.save(d);
 					return ResponseEntity.status(HttpStatus.CREATED).body(x);
 				}
 				return ResponseEntity.badRequest().build();
-		
 	}
 
 
@@ -156,49 +145,38 @@ public class BasicController {
 	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
 	    }
 	} 
+	
+	@GetMapping("check/{id}") 
+	public ResponseEntity<?> findByNameAndPhone(@PathVariable int id){
+		DoctorDetailsToAppointment data=this.service.findNameAndPhoneById(id);
+		if(data==null) {
+			return ResponseEntity.badRequest().build();
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(data);
+	}
 
 
-	@GetMapping("/existsById/{id}")
-	public boolean isExistDoctor(@PathVariable("id") int id) {
-		return this.service.isExistsDoctor(id);		
-	}
-	@DeleteMapping("/{id}")
-	public void delete(@RequestParam("id") int id) {
-		this.service.delete(id);
-	}
 	
 	
-	@PutMapping("/doctors/{id}")
-	public Doctor updateById(@RequestBody Doctor doctor,@PathVariable("id") int id)
-	{		
-		Doctor s=this.service.updateById(doctor, id);
-		return s;
-		
-	}
-	@PutMapping("/update/status/{id}")
-	public void updateStatus(@PathVariable("id") int id,@RequestParam("status") String status)
-	{
-		this.service.updateApprovalStatus(id,status); 
-	}
 	 
 	
 	@GetMapping("/available-doctors")
-	public List<Available_Doctor_Respponse> getAvailableDoctors()
+	public ResponseEntity<?> getAvailableDoctors()
 	{
-		List<Available_Doctor_Respponse> li= this.service1.availableDoctors();
+		List<Integer> li= this.service1.availableDoctors();
 		if(li.size()==0)
 		{
 			throw new ResourceNotFoundException("OOPS!! NO DOCTORS AVAILABLE NOW!! \n"
 					+ "we will let you know once any doctor available.");
 		}
-		return li;
+		return ResponseEntity.status(HttpStatus.OK).body(li);
 	}
 	
 	
 	@PostMapping("/add-available")
 	public Available_Doctor_Now create(@RequestBody Available_Doctor_Now d)
 	{
-		return this.service1.add(d);
+		return this.service1.add(d); 
 		
 	}
 //	@PostMapping("/logout")
